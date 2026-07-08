@@ -1,7 +1,7 @@
 app_name = "design_studio"
-app_title = "Design app for edit"
+app_title = "design_studio"
 app_publisher = "Beetashoke Chakraborty"
-app_description = "Design studio"
+app_description = "design_studio"
 app_email = "beetashokechakraborty721@gmail.com"
 app_license = "mit"
 
@@ -63,6 +63,12 @@ app_license = "mit"
 # role_home_page = {
 # 	"Role": "home_page"
 # }
+
+# Route all sub-paths of the SPA to the same www page so client-side
+# routing (react-router) works on hard refresh / direct links.
+website_route_rules = [
+	{"from_route": "/design_studio/<path:app_path>", "to_route": "design_studio"},
+]
 
 # Generators
 # ----------
