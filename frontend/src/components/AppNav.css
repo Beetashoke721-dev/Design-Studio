@@ -1,0 +1,53 @@
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.app-nav-brand {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-h);
+}
+
+.app-nav-links {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+}
+
+.app-nav-links a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14.5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.app-nav-links a:hover {
+  color: var(--text-h);
+}
+
+.app-nav-links a.active {
+  color: var(--text-h);
+  background: var(--code-bg);
+  font-weight: 500;
+}
+
+.app-nav-logout {
+  font: inherit;
+  font-size: 13.5px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.app-nav-logout:hover {
+  box-shadow: var(--shadow);
+}

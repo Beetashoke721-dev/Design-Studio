@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "creation": "2026-07-08 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "api_key",
+  "google_api_key",
+  "column_break_api",
+  "default_model",
+  "system_prompt"
+ ],
+ "fields": [
+  {
+   "fieldname": "api_key",
+   "fieldtype": "Password",
+   "label": "Anthropic API Key",
+   "description": "Your Anthropic Console API key (starts with sk-ant-...). Never shared with the frontend."
+  },
+  {
+   "fieldname": "google_api_key",
+   "fieldtype": "Password",
+   "label": "Google AI (Gemini) API Key",
+   "description": "Your Gemini API key from Google AI Studio. Gemini has a free usage tier, unlike the Anthropic API."
+  },
+  {
+   "fieldname": "column_break_api",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "claude-opus-4-8",
+   "fieldname": "default_model",
+   "fieldtype": "Select",
+   "label": "Default Model",
+   "options": "claude-opus-4-8\nclaude-sonnet-5\nclaude-haiku-4-5\ngemini-3.5-flash\ngemini-2.5-flash",
+   "reqd": 1,
+   "description": "Used when a new chat is started without explicitly picking a model."
+  },
+  {
+   "fieldname": "system_prompt",
+   "fieldtype": "Small Text",
+   "label": "System Prompt",
+   "description": "Instructions given to the assistant at the start of every conversation. Leave blank for a plain assistant."
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-07-08 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "design_studio",
+ "name": "AI Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
