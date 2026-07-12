@@ -14,6 +14,16 @@ export default defineConfig({
         changeOrigin: true,
         headers: { Host: FRAPPE_SITE },
       },
+      '/private': {
+        target: `http://127.0.0.1:${FRAPPE_PORT}`,
+        changeOrigin: true,
+        headers: { Host: FRAPPE_SITE },
+      },
+      '/files': {
+        target: `http://127.0.0.1:${FRAPPE_PORT}`,
+        changeOrigin: true,
+        headers: { Host: FRAPPE_SITE },
+      },
       '/socket.io': {
         target: `http://127.0.0.1:${FRAPPE_PORT}`,
         ws: true,

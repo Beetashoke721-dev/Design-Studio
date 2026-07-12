@@ -16,6 +16,9 @@ export default function AppNav() {
         <Link to="/chat" className={location.pathname === '/chat' ? 'active' : ''}>
           Chat
         </Link>
+        <Link to="/image-studio" className={location.pathname === '/image-studio' ? 'active' : ''}>
+          Image Studio
+        </Link>
       </div>
       <button type="button" className="app-nav-logout" onClick={() => logout()}>
         Log out

@@ -1,0 +1,226 @@
+.studio-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px 32px;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.studio-prompt-bar {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.studio-prompt-input {
+  flex: 1;
+  font: inherit;
+  font-size: 14.5px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text-h);
+  resize: none;
+  max-height: 160px;
+  box-sizing: border-box;
+}
+
+.studio-prompt-input:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.studio-generate-button {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 18px;
+  border-radius: 12px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.studio-generate-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.studio-generate-button:hover:not(:disabled) {
+  box-shadow: var(--shadow);
+}
+
+.studio-error {
+  font-size: 13.5px;
+  color: #e5484d;
+  background: rgba(229, 72, 77, 0.1);
+  border: 1px solid rgba(229, 72, 77, 0.3);
+  border-radius: 10px;
+  padding: 10px 13px;
+}
+
+.studio-export-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.studio-export-button {
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.studio-export-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.studio-export-button:hover:not(:disabled) {
+  box-shadow: var(--shadow);
+}
+
+.studio-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.studio-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--text);
+  font-size: 14.5px;
+  padding: 40px 0;
+}
+
+.studio-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--code-bg);
+}
+
+.studio-card-select {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+}
+
+.studio-card-select input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.studio-card-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+  background: var(--border);
+}
+
+.studio-card-meta {
+  padding: 10px 12px 0;
+}
+
+.studio-card-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+
+.studio-card-prompt {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 140%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.studio-card-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  margin-top: auto;
+}
+
+.studio-card-actions button {
+  flex: 1;
+  font: inherit;
+  font-size: 12.5px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.studio-card-actions button:hover {
+  box-shadow: var(--shadow);
+}
+
+.studio-edit-prompt {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 12px;
+}
+
+.studio-edit-prompt input {
+  flex: 1;
+  font: inherit;
+  font-size: 12.5px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  box-sizing: border-box;
+}
+
+.studio-edit-prompt button {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.studio-edit-prompt button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

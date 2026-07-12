@@ -1,0 +1,113 @@
+.editor-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+
+.editor-modal {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 92vw;
+  max-height: 92vh;
+  overflow: auto;
+  box-shadow: var(--shadow);
+}
+
+.editor-canvas-wrap {
+  position: relative;
+  align-self: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.editor-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--code-bg);
+  min-width: 240px;
+  min-height: 180px;
+}
+
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+}
+
+.editor-tool-group {
+  display: flex;
+  gap: 8px;
+}
+
+.editor-tool-group button,
+.editor-actions button {
+  font: inherit;
+  font-size: 13.5px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.editor-tool-group button:hover:not(:disabled),
+.editor-actions button:hover:not(:disabled) {
+  box-shadow: var(--shadow);
+}
+
+.editor-tool-group button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editor-tool-group button.editor-tool-active {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.editor-slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.editor-save {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.editor-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

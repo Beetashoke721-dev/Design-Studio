@@ -13,6 +13,8 @@ dependencies = [
     # Pinned to 1.x: 2.x pulls in google-auth>=2.48.1, which conflicts with
     # frappe's own google-auth~=2.48.0 pin (2.48.1 doesn't exist as a release).
     "google-genai~=1.39",
+    # Unpinned: frappe core already depends on a compatible Pillow version.
+    "Pillow",
 ]
 
 [build-system]

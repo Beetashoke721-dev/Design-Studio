@@ -8,6 +8,7 @@
   "google_api_key",
   "column_break_api",
   "default_model",
+  "image_model",
   "system_prompt"
  ],
  "fields": [
@@ -35,6 +36,15 @@
    "options": "claude-opus-4-8\nclaude-sonnet-5\nclaude-haiku-4-5\ngemini-3.5-flash\ngemini-2.5-flash",
    "reqd": 1,
    "description": "Used when a new chat is started without explicitly picking a model."
+  },
+  {
+   "default": "gemini-2.5-flash-image",
+   "fieldname": "image_model",
+   "fieldtype": "Select",
+   "label": "Image Model",
+   "options": "gemini-2.5-flash-image",
+   "reqd": 1,
+   "description": "Gemini model used for image generation and AI-assisted editing. Uses the same Google (Gemini) API key above."
   },
   {
    "fieldname": "system_prompt",

@@ -44,5 +44,9 @@ def get_default_model() -> str:
 	return frappe.get_cached_doc("AI Settings").default_model or "claude-opus-4-8"
 
 
+def get_image_model() -> str:
+	return frappe.get_cached_doc("AI Settings").image_model or "gemini-2.5-flash-image"
+
+
 def get_system_prompt() -> str | None:
 	return frappe.get_cached_doc("AI Settings").system_prompt or None
