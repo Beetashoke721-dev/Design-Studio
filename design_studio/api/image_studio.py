@@ -240,6 +240,36 @@ def save_manual_edit(image: str, data_url: str):
 
 
 @frappe.whitelist()
+@rate_limit(limit=30, seconds=60)
+def save_design(data_url: str, title: str | None = None):
+	"""Persist a composed design (blank canvas + text/image elements) as a new image."""
+	if not data_url or "base64," not in data_url:
+		frappe.throw(_("Invalid image data"))
+	mime_type = data_url.split(";")[0].replace("data:", "") or "image/png"
+	ext = MIME_EXTENSIONS.get(mime_type, "png")
+
+	doc = frappe.get_doc(
+		{
+			"doctype": "AI Generated Image",
+			"source_type": "Design",
+			"mime_type": mime_type,
+			"prompt": (title or "").strip() or None,
+		}
+	).insert()
+
+	file_doc = save_file(
+		f"{frappe.generate_hash(length=10)}.{ext}",
+		data_url,
+		"AI Generated Image",
+		doc.name,
+		decode=True,
+		is_private=1,
+	)
+	doc.db_set("image", file_doc.file_url)
+	return _serialize(doc)
+
+
+@frappe.whitelist()
 def list_images():
 	return frappe.get_all(
 		"AI Generated Image",

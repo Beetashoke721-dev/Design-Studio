@@ -9,6 +9,23 @@
 
 .studio-model-bar {
   display: flex;
+  gap: 10px;
+}
+
+.studio-create-design-button {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.studio-create-design-button:hover {
+  box-shadow: var(--shadow);
 }
 
 .studio-model-select {

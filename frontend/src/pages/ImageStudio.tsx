@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { useFrappeGetCall, useFrappePostCall, type FrappeError } from 'frappe-react-sdk'
 import AppNav from '../components/AppNav'
 import ImageEditorModal from '../components/ImageEditorModal'
+import DesignCanvasModal from '../components/DesignCanvasModal'
 import { getErrorMessage } from '../lib/errors'
 import './image-studio.css'
 
@@ -10,7 +11,7 @@ interface ImageRow {
   name: string
   image: string
   prompt: string | null
-  source_type: 'Generated' | 'AI Edit' | 'Manual Edit'
+  source_type: 'Generated' | 'AI Edit' | 'Manual Edit' | 'Design'
   parent_image: string | null
   model: string | null
   creation: string
@@ -41,6 +42,8 @@ export default function ImageStudio() {
   const [editingImage, setEditingImage] = useState<string | null>(null)
   const [manualEditTarget, setManualEditTarget] = useState<ImageRow | null>(null)
   const [savingManualEdit, setSavingManualEdit] = useState(false)
+  const [showDesignCanvas, setShowDesignCanvas] = useState(false)
+  const [savingDesign, setSavingDesign] = useState(false)
   const [exporting, setExporting] = useState(false)
 
   const { data, mutate } = useFrappeGetCall<{ message: ImageRow[] }>(
@@ -57,6 +60,9 @@ export default function ImageStudio() {
   )
   const { call: saveManualEdit } = useFrappePostCall<{ message: ImageRow }>(
     'design_studio.api.image_studio.save_manual_edit',
+  )
+  const { call: saveDesign } = useFrappePostCall<{ message: ImageRow }>(
+    'design_studio.api.image_studio.save_design',
   )
   const { call: exportPdf } = useFrappePostCall<{ message: ExportResponse }>(
     'design_studio.api.image_studio.export_pdf',
@@ -145,6 +151,21 @@ export default function ImageStudio() {
     }
   }
 
+  const submitDesign = async (dataUrl: string) => {
+    setSavingDesign(true)
+    setError(null)
+    try {
+      const res = await saveDesign({ data_url: dataUrl })
+      setActiveImage(res.message)
+      setShowDesignCanvas(false)
+      mutate()
+    } catch (err) {
+      setError(getErrorMessage(err as FrappeError) ?? 'Could not save the design. Please try again.')
+    } finally {
+      setSavingDesign(false)
+    }
+  }
+
   const toggleSelected = (name: string) => {
     setSelected((prev) => {
       const next = new Set(prev)
@@ -202,6 +223,13 @@ export default function ImageStudio() {
                 ))}
             </optgroup>
           </select>
+          <button
+            type="button"
+            className="studio-create-design-button"
+            onClick={() => setShowDesignCanvas(true)}
+          >
+            + Create design
+          </button>
         </div>
 
         {activeImage && (
@@ -333,6 +361,19 @@ export default function ImageStudio() {
           saving={savingManualEdit}
           onCancel={() => setManualEditTarget(null)}
           onSave={submitManualEdit}
+        />
+      )}
+
+      {showDesignCanvas && (
+        <DesignCanvasModal
+          saving={savingDesign}
+          galleryImages={images.map((img) => ({
+            name: img.name,
+            image: img.image,
+            prompt: img.prompt,
+          }))}
+          onCancel={() => setShowDesignCanvas(false)}
+          onSave={submitDesign}
         />
       )}
     </div>
