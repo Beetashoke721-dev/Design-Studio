@@ -31,6 +31,7 @@ interface ImageModelOption {
 export default function ImageStudio() {
   const [prompt, setPrompt] = useState('')
   const [selectedModel, setSelectedModel] = useState('')
+  const [activeImage, setActiveImage] = useState<ImageRow | null>(null)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -78,11 +79,20 @@ export default function ImageStudio() {
     setGenerating(true)
     setError(null)
     try {
-      await generateImage({ prompt: text, model: selectedModel })
+      // With an active image, keep refining it instead of starting a new one each time.
+      const res = activeImage
+        ? await editImage({ image: activeImage.name, prompt: text, model: selectedModel })
+        : await generateImage({ prompt: text, model: selectedModel })
+      setActiveImage(res.message)
       setPrompt('')
       mutate()
     } catch (err) {
-      setError(getErrorMessage(err as FrappeError) ?? 'Could not generate the image. Please try again.')
+      setError(
+        getErrorMessage(err as FrappeError) ??
+          (activeImage
+            ? 'Could not refine the image. Please try again.'
+            : 'Could not generate the image. Please try again.'),
+      )
     } finally {
       setGenerating(false)
     }
@@ -94,7 +104,8 @@ export default function ImageStudio() {
     setEditingImage(image)
     setError(null)
     try {
-      await editImage({ image, prompt: text, model: editModel || undefined })
+      const res = await editImage({ image, prompt: text, model: editModel || undefined })
+      setActiveImage(res.message)
       setEditPromptFor(null)
       setEditPromptText('')
       mutate()
@@ -121,7 +132,8 @@ export default function ImageStudio() {
     setSavingManualEdit(true)
     setError(null)
     try {
-      await saveManualEdit({ image: manualEditTarget.name, data_url: dataUrl })
+      const res = await saveManualEdit({ image: manualEditTarget.name, data_url: dataUrl })
+      setActiveImage(res.message)
       setManualEditTarget(null)
       mutate()
     } catch (err) {
@@ -192,10 +204,22 @@ export default function ImageStudio() {
           </select>
         </div>
 
+        {activeImage && (
+          <div className="studio-active-banner">
+            <img src={activeImage.image} alt="" className="studio-active-thumb" />
+            <span>Refining this image — new prompts build on it instead of starting fresh.</span>
+            <button type="button" onClick={() => setActiveImage(null)}>
+              Start new image
+            </button>
+          </div>
+        )}
+
         <form className="studio-prompt-bar" onSubmit={submitGenerate}>
           <textarea
             className="studio-prompt-input"
-            placeholder="Describe the image you want to generate…"
+            placeholder={
+              activeImage ? 'Describe the change you want…' : 'Describe the image you want to generate…'
+            }
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             rows={1}
@@ -205,7 +229,7 @@ export default function ImageStudio() {
             className="studio-generate-button"
             disabled={generating || !prompt.trim() || !selectedModel}
           >
-            {generating ? 'Generating…' : 'Generate'}
+            {generating ? (activeImage ? 'Refining…' : 'Generating…') : activeImage ? 'Refine' : 'Generate'}
           </button>
         </form>
 
@@ -228,7 +252,10 @@ export default function ImageStudio() {
             <div className="studio-empty">No images yet. Generate one above to get started.</div>
           )}
           {images.map((img) => (
-            <div key={img.name} className="studio-card">
+            <div
+              key={img.name}
+              className={`studio-card${activeImage?.name === img.name ? ' active' : ''}`}
+            >
               <label className="studio-card-select">
                 <input
                   type="checkbox"
@@ -236,7 +263,13 @@ export default function ImageStudio() {
                   onChange={() => toggleSelected(img.name)}
                 />
               </label>
-              <img className="studio-card-image" src={img.image} alt={img.prompt ?? img.source_type} />
+              <img
+                className="studio-card-image"
+                src={img.image}
+                alt={img.prompt ?? img.source_type}
+                onClick={() => setActiveImage(img)}
+                title="Click to keep refining this image"
+              />
               <div className="studio-card-meta">
                 <span className="studio-card-tag">{img.source_type}</span>
                 {img.prompt && <p className="studio-card-prompt">{img.prompt}</p>}

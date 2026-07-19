@@ -21,6 +21,47 @@
   color: var(--text-h);
 }
 
+.studio-active-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.studio-active-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.studio-active-banner span {
+  flex: 1;
+}
+
+.studio-active-banner button {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--accent-border);
+  background: var(--bg);
+  color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.studio-active-banner button:hover {
+  box-shadow: var(--shadow);
+}
+
 .studio-prompt-bar {
   display: flex;
   gap: 10px;
@@ -132,6 +173,11 @@
   background: var(--code-bg);
 }
 
+.studio-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
 .studio-card-select {
   position: absolute;
   top: 8px;
@@ -151,6 +197,7 @@
   object-fit: cover;
   display: block;
   background: var(--border);
+  cursor: pointer;
 }
 
 .studio-card-meta {
