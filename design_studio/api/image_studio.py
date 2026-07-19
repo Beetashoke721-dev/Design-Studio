@@ -7,11 +7,16 @@ from frappe.utils.file_manager import save_file
 from google import genai
 from google.genai import errors as genai_errors
 from google.genai import types as genai_types
+from huggingface_hub import InferenceClient
+from huggingface_hub.errors import HfHubHTTPError
 from PIL import Image, ImageOps
 
 from design_studio.design_studio.doctype.ai_settings.ai_settings import (
 	get_google_api_key,
+	get_huggingface_api_key,
 	get_image_model,
+	has_google_api_key,
+	has_huggingface_api_key,
 )
 
 MAX_PROMPT_LENGTH = 2000
@@ -21,6 +26,16 @@ MIME_EXTENSIONS = {
 	"image/jpeg": "jpg",
 	"image/webp": "webp",
 }
+
+IMAGE_MODELS = [
+	{"id": "gemini-2.5-flash-image", "label": "Gemini 2.5 Flash Image", "provider": "google"},
+	{
+		"id": "black-forest-labs/FLUX.1-schnell",
+		"label": "FLUX.1 Schnell (Hugging Face, free)",
+		"provider": "huggingface",
+	},
+]
+IMAGE_MODEL_PROVIDER = {m["id"]: m["provider"] for m in IMAGE_MODELS}
 
 
 def _get_owned_image(image: str):
@@ -35,13 +50,11 @@ def _get_image_bytes(doc) -> bytes:
 	return file_doc.get_content()
 
 
-def _call_gemini_image(contents) -> tuple[bytes, str]:
+def _call_gemini_image(contents, model: str) -> tuple[bytes, str]:
 	client = genai.Client(api_key=get_google_api_key())
 	config = genai_types.GenerateContentConfig(response_modalities=["TEXT", "IMAGE"])
 	try:
-		response = client.models.generate_content(
-			model=get_image_model(), contents=contents, config=config
-		)
+		response = client.models.generate_content(model=model, contents=contents, config=config)
 	except genai_errors.APIError as e:
 		if e.code in (401, 403):
 			frappe.throw(_("The configured Google (Gemini) API key is invalid. Please check AI Settings."))
@@ -56,6 +69,28 @@ def _call_gemini_image(contents) -> tuple[bytes, str]:
 			return part.inline_data.data, part.inline_data.mime_type or "image/png"
 
 	frappe.throw(_("Gemini did not return an image. Please try a different prompt."))
+
+
+def _call_huggingface_image(prompt: str, model: str) -> tuple[bytes, str]:
+	# provider="auto" lets Hugging Face route to whichever backend currently serves
+	# this model - hardcoding a specific provider (e.g. hf-inference) breaks whenever
+	# that provider's catalog changes, which happens often on their free tier.
+	client = InferenceClient(provider="auto", api_key=get_huggingface_api_key())
+	try:
+		image = client.text_to_image(prompt, model=model)
+	except HfHubHTTPError as e:
+		status_code = e.response.status_code if e.response is not None else None
+		if status_code in (401, 403):
+			frappe.throw(_("The configured Hugging Face API token is invalid. Please check AI Settings."))
+		if status_code == 429:
+			frappe.throw(_("Hugging Face is rate-limiting this token right now. Please try again shortly."))
+		if status_code == 503:
+			frappe.throw(_("The Hugging Face model is warming up. Please try again in about a minute."))
+		frappe.throw(_("Hugging Face API error: {0}").format(e.server_message or str(e)))
+
+	buffer = io.BytesIO()
+	image.save(buffer, format="PNG")
+	return buffer.getvalue(), "image/png"
 
 
 def _save_generated_image(
@@ -101,25 +136,49 @@ def _serialize(doc) -> dict:
 
 
 @frappe.whitelist()
+def get_available_image_models():
+	"""Image models the frontend can offer, flagged with whether their API key is configured."""
+	google_ready = has_google_api_key()
+	huggingface_ready = has_huggingface_api_key()
+	return [
+		{**m, "configured": google_ready if m["provider"] == "google" else huggingface_ready}
+		for m in IMAGE_MODELS
+	]
+
+
+@frappe.whitelist()
 @rate_limit(limit=15, seconds=60)
-def generate_image(prompt: str):
-	"""Generate a new image from a text prompt using Gemini."""
+def generate_image(prompt: str, model: str | None = None):
+	"""Generate a new image from a text prompt, using Gemini or a free Hugging Face model."""
 	prompt = (prompt or "").strip()
 	if not prompt:
 		frappe.throw(_("Prompt cannot be empty"))
 	if len(prompt) > MAX_PROMPT_LENGTH:
 		frappe.throw(_("Prompt is too long (max {0} characters)").format(MAX_PROMPT_LENGTH))
 
-	model = get_image_model()
-	image_bytes, mime_type = _call_gemini_image(prompt)
+	model = model or get_image_model()
+	provider = IMAGE_MODEL_PROVIDER.get(model)
+	if provider is None:
+		frappe.throw(_("Unknown image model: {0}").format(model))
+
+	if provider == "google":
+		image_bytes, mime_type = _call_gemini_image(prompt, model)
+	else:
+		image_bytes, mime_type = _call_huggingface_image(prompt, model)
+
 	doc = _save_generated_image(image_bytes, mime_type, "Generated", prompt, model)
 	return _serialize(doc)
 
 
 @frappe.whitelist()
 @rate_limit(limit=15, seconds=60)
-def edit_image(image: str, prompt: str):
-	"""Edit an existing image with a text instruction using Gemini, saved as a new linked image."""
+def edit_image(image: str, prompt: str, model: str | None = None):
+	"""Edit an existing image with a text instruction, saved as a new linked image.
+
+	Gemini can condition directly on the image's pixels. Hugging Face's free
+	text-to-image models can't take an image as input, so for those we instead
+	regenerate a fresh image from the original prompt plus the edit instruction.
+	"""
 	prompt = (prompt or "").strip()
 	if not prompt:
 		frappe.throw(_("Edit instruction cannot be empty"))
@@ -127,14 +186,22 @@ def edit_image(image: str, prompt: str):
 		frappe.throw(_("Prompt is too long (max {0} characters)").format(MAX_PROMPT_LENGTH))
 
 	source = _get_owned_image(image)
-	source_bytes = _get_image_bytes(source)
-	model = get_image_model()
+	model = model or source.model or get_image_model()
+	provider = IMAGE_MODEL_PROVIDER.get(model)
+	if provider is None:
+		frappe.throw(_("Unknown image model: {0}").format(model))
 
-	contents = [
-		prompt,
-		genai_types.Part.from_bytes(data=source_bytes, mime_type=source.mime_type or "image/png"),
-	]
-	image_bytes, mime_type = _call_gemini_image(contents)
+	if provider == "google":
+		source_bytes = _get_image_bytes(source)
+		contents = [
+			prompt,
+			genai_types.Part.from_bytes(data=source_bytes, mime_type=source.mime_type or "image/png"),
+		]
+		image_bytes, mime_type = _call_gemini_image(contents, model)
+	else:
+		combined_prompt = f"{source.prompt}. {prompt}" if source.prompt else prompt
+		image_bytes, mime_type = _call_huggingface_image(combined_prompt, model)
+
 	doc = _save_generated_image(
 		image_bytes, mime_type, "AI Edit", prompt, model, parent_image=source.name
 	)

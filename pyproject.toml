@@ -15,6 +15,9 @@ dependencies = [
     "google-genai~=1.39",
     # Unpinned: frappe core already depends on a compatible Pillow version.
     "Pillow",
+    # Handles Hugging Face Inference Providers routing (provider="auto") so image
+    # generation keeps working as their free-tier provider catalog changes.
+    "huggingface_hub[inference]>=0.30",
 ]
 
 [build-system]

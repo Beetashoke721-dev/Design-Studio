@@ -7,6 +7,20 @@
   box-sizing: border-box;
 }
 
+.studio-model-bar {
+  display: flex;
+}
+
+.studio-model-select {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text-h);
+}
+
 .studio-prompt-bar {
   display: flex;
   gap: 10px;
@@ -189,10 +203,36 @@
   box-shadow: var(--shadow);
 }
 
+.studio-edit-wrap {
+  padding: 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .studio-edit-prompt {
   display: flex;
   gap: 6px;
-  padding: 0 12px 12px;
+  padding: 0;
+}
+
+.studio-edit-model-select {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 7px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  flex-shrink: 0;
+  max-width: 92px;
+}
+
+.studio-edit-hint {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text);
+  line-height: 140%;
 }
 
 .studio-edit-prompt input {

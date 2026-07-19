@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useFrappeGetCall, useFrappePostCall, type FrappeError } from 'frappe-react-sdk'
 import AppNav from '../components/AppNav'
@@ -21,13 +21,22 @@ interface ExportResponse {
   pdf_file: string
 }
 
+interface ImageModelOption {
+  id: string
+  label: string
+  provider: 'google' | 'huggingface'
+  configured: boolean
+}
+
 export default function ImageStudio() {
   const [prompt, setPrompt] = useState('')
+  const [selectedModel, setSelectedModel] = useState('')
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [editPromptFor, setEditPromptFor] = useState<string | null>(null)
   const [editPromptText, setEditPromptText] = useState('')
+  const [editModel, setEditModel] = useState('')
   const [editingImage, setEditingImage] = useState<string | null>(null)
   const [manualEditTarget, setManualEditTarget] = useState<ImageRow | null>(null)
   const [savingManualEdit, setSavingManualEdit] = useState(false)
@@ -35,6 +44,9 @@ export default function ImageStudio() {
 
   const { data, mutate } = useFrappeGetCall<{ message: ImageRow[] }>(
     'design_studio.api.image_studio.list_images',
+  )
+  const { data: modelsData } = useFrappeGetCall<{ message: ImageModelOption[] }>(
+    'design_studio.api.image_studio.get_available_image_models',
   )
   const { call: generateImage } = useFrappePostCall<{ message: ImageRow }>(
     'design_studio.api.image_studio.generate_image',
@@ -50,15 +62,23 @@ export default function ImageStudio() {
   )
 
   const images = data?.message ?? []
+  const models = modelsData?.message ?? []
+
+  // Default to the first model whose API key is actually configured.
+  useEffect(() => {
+    if (!selectedModel && models.length > 0) {
+      setSelectedModel(models.find((m) => m.configured)?.id ?? models[0].id)
+    }
+  }, [models, selectedModel])
 
   const submitGenerate = async (e: FormEvent) => {
     e.preventDefault()
     const text = prompt.trim()
-    if (!text || generating) return
+    if (!text || generating || !selectedModel) return
     setGenerating(true)
     setError(null)
     try {
-      await generateImage({ prompt: text })
+      await generateImage({ prompt: text, model: selectedModel })
       setPrompt('')
       mutate()
     } catch (err) {
@@ -74,7 +94,7 @@ export default function ImageStudio() {
     setEditingImage(image)
     setError(null)
     try {
-      await editImage({ image, prompt: text })
+      await editImage({ image, prompt: text, model: editModel || undefined })
       setEditPromptFor(null)
       setEditPromptText('')
       mutate()
@@ -82,6 +102,17 @@ export default function ImageStudio() {
       setError(getErrorMessage(err as FrappeError) ?? 'Could not edit the image. Please try again.')
     } finally {
       setEditingImage(null)
+    }
+  }
+
+  // Default the edit model to whichever model generated this image, falling
+  // back to the currently selected generate-model if that one isn't set up.
+  const openEditPrompt = (img: ImageRow) => {
+    const isOpen = editPromptFor === img.name
+    setEditPromptFor(isOpen ? null : img.name)
+    if (!isOpen) {
+      const sourceModel = img.model && models.some((m) => m.id === img.model) ? img.model : ''
+      setEditModel(sourceModel || selectedModel)
     }
   }
 
@@ -132,6 +163,35 @@ export default function ImageStudio() {
     <div className="app-page">
       <AppNav />
       <div className="studio-layout">
+        <div className="studio-model-bar">
+          <select
+            className="studio-model-select"
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+          >
+            <optgroup label="Google">
+              {models
+                .filter((m) => m.provider === 'google')
+                .map((m) => (
+                  <option key={m.id} value={m.id} disabled={!m.configured}>
+                    {m.label}
+                    {!m.configured ? ' — needs API key' : ''}
+                  </option>
+                ))}
+            </optgroup>
+            <optgroup label="Hugging Face">
+              {models
+                .filter((m) => m.provider === 'huggingface')
+                .map((m) => (
+                  <option key={m.id} value={m.id} disabled={!m.configured}>
+                    {m.label}
+                    {!m.configured ? ' — needs API token' : ''}
+                  </option>
+                ))}
+            </optgroup>
+          </select>
+        </div>
+
         <form className="studio-prompt-bar" onSubmit={submitGenerate}>
           <textarea
             className="studio-prompt-input"
@@ -143,7 +203,7 @@ export default function ImageStudio() {
           <button
             type="submit"
             className="studio-generate-button"
-            disabled={generating || !prompt.trim()}
+            disabled={generating || !prompt.trim() || !selectedModel}
           >
             {generating ? 'Generating…' : 'Generate'}
           </button>
@@ -185,32 +245,49 @@ export default function ImageStudio() {
                 <button type="button" onClick={() => setManualEditTarget(img)}>
                   Manual edit
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setEditPromptFor(editPromptFor === img.name ? null : img.name)}
-                >
+                <button type="button" onClick={() => openEditPrompt(img)}>
                   Edit with AI
                 </button>
               </div>
               {editPromptFor === img.name && (
-                <form
-                  className="studio-edit-prompt"
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    submitEdit(img.name)
-                  }}
-                >
-                  <input
-                    type="text"
-                    placeholder="Describe the edit…"
-                    value={editPromptText}
-                    onChange={(e) => setEditPromptText(e.target.value)}
-                    autoFocus
-                  />
-                  <button type="submit" disabled={editingImage === img.name || !editPromptText.trim()}>
-                    {editingImage === img.name ? 'Editing…' : 'Apply'}
-                  </button>
-                </form>
+                <div className="studio-edit-wrap">
+                  <form
+                    className="studio-edit-prompt"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      submitEdit(img.name)
+                    }}
+                  >
+                    <select
+                      className="studio-edit-model-select"
+                      value={editModel}
+                      onChange={(e) => setEditModel(e.target.value)}
+                    >
+                      {models.map((m) => (
+                        <option key={m.id} value={m.id} disabled={!m.configured}>
+                          {m.provider === 'google' ? 'Gemini' : 'Hugging Face'}
+                          {!m.configured ? ' — needs key' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Describe the edit…"
+                      value={editPromptText}
+                      onChange={(e) => setEditPromptText(e.target.value)}
+                      autoFocus
+                    />
+                    <button type="submit" disabled={editingImage === img.name || !editPromptText.trim()}>
+                      {editingImage === img.name ? 'Editing…' : 'Apply'}
+                    </button>
+                  </form>
+                  {models.find((m) => m.id === editModel)?.provider === 'huggingface' && (
+                    <p className="studio-edit-hint">
+                      Hugging Face can't edit existing pixels — it regenerates a new image from the
+                      original description plus your instruction.
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           ))}

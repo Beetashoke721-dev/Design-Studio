@@ -6,6 +6,7 @@
  "field_order": [
   "api_key",
   "google_api_key",
+  "huggingface_api_key",
   "column_break_api",
   "default_model",
   "image_model",
@@ -25,6 +26,12 @@
    "description": "Your Gemini API key from Google AI Studio. Gemini has a free usage tier, unlike the Anthropic API."
   },
   {
+   "fieldname": "huggingface_api_key",
+   "fieldtype": "Password",
+   "label": "Hugging Face API Token",
+   "description": "A fine-grained token with \"Make calls to Inference Providers\" permission, from huggingface.co/settings/tokens. Used as a free fallback for image generation when Gemini's quota is unavailable."
+  },
+  {
    "fieldname": "column_break_api",
    "fieldtype": "Column Break"
   },
@@ -38,13 +45,13 @@
    "description": "Used when a new chat is started without explicitly picking a model."
   },
   {
-   "default": "gemini-2.5-flash-image",
+   "default": "black-forest-labs/FLUX.1-schnell",
    "fieldname": "image_model",
    "fieldtype": "Select",
-   "label": "Image Model",
-   "options": "gemini-2.5-flash-image",
+   "label": "Default Image Model",
+   "options": "gemini-2.5-flash-image\nblack-forest-labs/FLUX.1-schnell",
    "reqd": 1,
-   "description": "Gemini model used for image generation and AI-assisted editing. Uses the same Google (Gemini) API key above."
+   "description": "Used when Image Studio generates an image without the user picking a model. Gemini also powers AI-assisted editing; Hugging Face is a free fallback for generation only."
   },
   {
    "fieldname": "system_prompt",
