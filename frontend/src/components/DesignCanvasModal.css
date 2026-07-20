@@ -83,6 +83,32 @@
   flex-wrap: wrap;
 }
 
+.design-shapes-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--code-bg);
+}
+
+.design-shape-button {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.design-shape-button:hover {
+  box-shadow: var(--shadow);
+}
+
 .design-gallery-strip {
   display: flex;
   flex-wrap: wrap;

@@ -11,7 +11,7 @@ interface ImageRow {
   name: string
   image: string
   prompt: string | null
-  source_type: 'Generated' | 'AI Edit' | 'Manual Edit' | 'Design'
+  source_type: 'Generated' | 'AI Edit' | 'Manual Edit' | 'Design' | 'Element'
   parent_image: string | null
   model: string | null
   creation: string
@@ -42,6 +42,7 @@ export default function ImageStudio() {
   const [editingImage, setEditingImage] = useState<string | null>(null)
   const [manualEditTarget, setManualEditTarget] = useState<ImageRow | null>(null)
   const [savingManualEdit, setSavingManualEdit] = useState(false)
+  const [extractingImage, setExtractingImage] = useState<string | null>(null)
   const [showDesignCanvas, setShowDesignCanvas] = useState(false)
   const [savingDesign, setSavingDesign] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -64,12 +65,16 @@ export default function ImageStudio() {
   const { call: saveDesign } = useFrappePostCall<{ message: ImageRow }>(
     'design_studio.api.image_studio.save_design',
   )
+  const { call: extractElement } = useFrappePostCall<{ message: ImageRow }>(
+    'design_studio.api.image_studio.extract_element',
+  )
   const { call: exportPdf } = useFrappePostCall<{ message: ExportResponse }>(
     'design_studio.api.image_studio.export_pdf',
   )
 
   const images = data?.message ?? []
   const models = modelsData?.message ?? []
+  const googleConfigured = models.some((m) => m.provider === 'google' && m.configured)
 
   // Default to the first model whose API key is actually configured.
   useEffect(() => {
@@ -163,6 +168,20 @@ export default function ImageStudio() {
       setError(getErrorMessage(err as FrappeError) ?? 'Could not save the design. Please try again.')
     } finally {
       setSavingDesign(false)
+    }
+  }
+
+  const submitExtract = async (image: string) => {
+    setExtractingImage(image)
+    setError(null)
+    try {
+      const res = await extractElement({ image })
+      setActiveImage(res.message)
+      mutate()
+    } catch (err) {
+      setError(getErrorMessage(err as FrappeError) ?? 'Could not extract an element. Please try again.')
+    } finally {
+      setExtractingImage(null)
     }
   }
 
@@ -308,6 +327,18 @@ export default function ImageStudio() {
                 </button>
                 <button type="button" onClick={() => openEditPrompt(img)}>
                   Edit with AI
+                </button>
+                <button
+                  type="button"
+                  onClick={() => submitExtract(img.name)}
+                  disabled={!googleConfigured || extractingImage === img.name}
+                  title={
+                    googleConfigured
+                      ? 'Cut the main subject onto a transparent background'
+                      : 'Requires a configured Google (Gemini) API key'
+                  }
+                >
+                  {extractingImage === img.name ? 'Extracting…' : 'Extract element'}
                 </button>
               </div>
               {editPromptFor === img.name && (

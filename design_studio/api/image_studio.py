@@ -209,6 +209,35 @@ def edit_image(image: str, prompt: str, model: str | None = None):
 
 
 @frappe.whitelist()
+@rate_limit(limit=15, seconds=60)
+def extract_element(image: str):
+	"""Cut the main subject out of an image onto a transparent background.
+
+	Uses Gemini specifically - it's the only provider here that can condition on an
+	existing image's pixels. Hugging Face's free-tier routing for dedicated
+	background-removal models proved unreliable (inconsistent provider/task support
+	between calls to the same model), so this doesn't offer that as a fallback.
+	"""
+	if not has_google_api_key():
+		frappe.throw(_("Extracting an element requires a configured Google (Gemini) API key."))
+
+	source = _get_owned_image(image)
+	source_bytes = _get_image_bytes(source)
+	contents = [
+		"Remove the background completely and keep only the main subject, cleanly cut out. "
+		"Output a PNG with a fully transparent alpha background outside the subject - not "
+		"white, not any solid color, true transparency.",
+		genai_types.Part.from_bytes(data=source_bytes, mime_type=source.mime_type or "image/png"),
+	]
+	image_bytes, mime_type = _call_gemini_image(contents, "gemini-2.5-flash-image")
+
+	doc = _save_generated_image(
+		image_bytes, mime_type, "Element", source.prompt, "gemini-2.5-flash-image", parent_image=source.name
+	)
+	return _serialize(doc)
+
+
+@frappe.whitelist()
 @rate_limit(limit=30, seconds=60)
 def save_manual_edit(image: str, data_url: str):
 	"""Persist a manually edited image (crop/rotate/filter/text) exported from the browser canvas."""

@@ -246,6 +246,7 @@
 
 .studio-card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 10px 12px 12px;
   margin-top: auto;
@@ -253,6 +254,7 @@
 
 .studio-card-actions button {
   flex: 1;
+  min-width: 90px;
   font: inherit;
   font-size: 12.5px;
   padding: 7px 8px;
@@ -263,8 +265,13 @@
   cursor: pointer;
 }
 
-.studio-card-actions button:hover {
+.studio-card-actions button:hover:not(:disabled) {
   box-shadow: var(--shadow);
+}
+
+.studio-card-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .studio-edit-wrap {
